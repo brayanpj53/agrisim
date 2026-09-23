@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import {
   Layers,
   Droplets,
@@ -10,6 +11,7 @@ import {
   Wheat,
   X,
   Plus,
+  ArrowRight,
 } from "lucide-react";
 
 import { supabase } from "../lib/supabase";
@@ -90,11 +92,14 @@ function Parcels() {
   ]);
 
   const [parcels, setParcels] = useState<Parcel[]>([]);
-  const [selectedParcelId, setSelectedParcelId] = useState<number | null>(null);
+  const [selectedParcelId, setSelectedParcelId] =
+    useState<number | null>(null);
 
   const [showModal, setShowModal] = useState(false);
-  const [loadingParcels, setLoadingParcels] = useState(true);
-  const [savingParcel, setSavingParcel] = useState(false);
+  const [loadingParcels, setLoadingParcels] =
+    useState(true);
+  const [savingParcel, setSavingParcel] =
+    useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -107,31 +112,42 @@ function Parcels() {
   });
 
   const selectedParcel =
-    parcels.find((parcel) => parcel.id === selectedParcelId) ?? null;
+    parcels.find(
+      (parcel) =>
+        parcel.id === selectedParcelId
+    ) ?? null;
 
   useEffect(() => {
     const loadParcels = async () => {
       setLoadingParcels(true);
 
-      const { data, error } = await supabase
-        .from("parcels")
-        .select("*")
-        .order("created_at", {
-          ascending: true,
-        });
+      const { data, error } =
+        await supabase
+          .from("parcels")
+          .select("*")
+          .order("created_at", {
+            ascending: true,
+          });
 
       if (error) {
-        console.error("Error cargando parcelas:", error);
+        console.error(
+          "Error cargando parcelas:",
+          error
+        );
+
         setLoadingParcels(false);
         return;
       }
 
-      const loadedParcels = (data ?? []) as Parcel[];
+      const loadedParcels =
+        (data ?? []) as Parcel[];
 
       setParcels(loadedParcels);
 
       if (loadedParcels.length > 0) {
-        setSelectedParcelId(loadedParcels[0].id);
+        setSelectedParcelId(
+          loadedParcels[0].id
+        );
       }
 
       setLoadingParcels(false);
@@ -154,9 +170,12 @@ function Parcels() {
   };
 
   const handleInputChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    event: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement
+    >
   ) => {
-    const { name, value } = event.target;
+    const { name, value } =
+      event.target;
 
     setFormData((currentData) => ({
       ...currentData,
@@ -185,7 +204,9 @@ function Parcels() {
     resetForm();
   };
 
-  const createParcel = async (event: React.FormEvent) => {
+  const createParcel = async (
+    event: React.FormEvent
+  ) => {
     event.preventDefault();
 
     setSavingParcel(true);
@@ -196,57 +217,85 @@ function Parcels() {
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      console.error("Error obteniendo usuario:", userError);
-      alert("No hay un usuario autenticado.");
+      console.error(
+        "Error obteniendo usuario:",
+        userError
+      );
+
+      alert(
+        "No hay un usuario autenticado."
+      );
+
       setSavingParcel(false);
       return;
     }
 
-    const moisture = Number(formData.moisture);
+    const moisture =
+      Number(formData.moisture);
 
     const parcelStatus =
-      moisture >= 55 ? "Óptimo" : "Atención";
+      moisture >= 55
+        ? "Óptimo"
+        : "Atención";
 
-    const { data, error } = await supabase
-      .from("parcels")
-      .insert({
-        user_id: user.id,
-        name: formData.name,
-        crop: formData.crop,
-        hectares: Number(formData.hectares),
-        stage: formData.stage,
-        irrigation:
-          formData.irrigation === ""
-            ? null
-            : Number(formData.irrigation),
-        moisture:
-          formData.moisture === ""
-            ? null
-            : moisture,
-        fertilizer:
-          formData.fertilizer === ""
-            ? null
-            : Number(formData.fertilizer),
-        status: parcelStatus,
-      })
-      .select()
-      .single();
+    const { data, error } =
+      await supabase
+        .from("parcels")
+        .insert({
+          user_id: user.id,
+          name: formData.name,
+          crop: formData.crop,
+          hectares:
+            Number(formData.hectares),
+          stage: formData.stage,
+          irrigation:
+            formData.irrigation === ""
+              ? null
+              : Number(
+                  formData.irrigation
+                ),
+          moisture:
+            formData.moisture === ""
+              ? null
+              : moisture,
+          fertilizer:
+            formData.fertilizer === ""
+              ? null
+              : Number(
+                  formData.fertilizer
+                ),
+          status: parcelStatus,
+        })
+        .select()
+        .single();
 
     if (error) {
-      console.error("Error creando parcela:", error);
-      alert("No se pudo guardar la parcela.");
+      console.error(
+        "Error creando parcela:",
+        error
+      );
+
+      alert(
+        "No se pudo guardar la parcela."
+      );
+
       setSavingParcel(false);
       return;
     }
 
-    const newParcel = data as Parcel;
+    const newParcel =
+      data as Parcel;
 
-    setParcels((currentParcels) => [
-      ...currentParcels,
-      newParcel,
-    ]);
+    setParcels(
+      (currentParcels) => [
+        ...currentParcels,
+        newParcel,
+      ]
+    );
 
-    setSelectedParcelId(newParcel.id);
+    setSelectedParcelId(
+      newParcel.id
+    );
 
     resetForm();
     setShowModal(false);
@@ -254,168 +303,225 @@ function Parcels() {
   };
 
   return (
-    <section className="parcels-page">
-      <div className="dashboard-header">
+    <section className="ag-parcels">
+      <div className="ag-parcels-header">
         <div>
+          <span className="ag-page-eyebrow">
+            GESTIÓN DEL CAMPO
+          </span>
+
           <h1>Parcelas</h1>
 
           <p>
-            Visualiza el predio y controla sus capas de información.
+            Visualiza tus predios,
+            consulta sus condiciones y
+            controla las capas de
+            información.
           </p>
         </div>
 
         <button
-          className="primary-button"
-          onClick={() => setShowModal(true)}
+          className="ag-btn ag-btn-primary"
+          onClick={() =>
+            setShowModal(true)
+          }
         >
           <Plus size={18} />
           Nueva parcela
         </button>
       </div>
 
-      <div className="parcel-layout">
-        <aside className="parcel-list-panel">
-          <div className="panel-title-row">
+      <div className="ag-parcel-layout">
+        <aside className="ag-parcel-list-panel">
+          <div className="ag-parcel-panel-header">
             <div>
-              <span className="panel-label">
-                Predio activo
+              <span>
+                PREDIOS
               </span>
 
-              <h2>AgriSim Field</h2>
+              <h2>
+                Mis parcelas
+              </h2>
             </div>
+
+            <span className="ag-parcel-count">
+              {parcels.length}
+            </span>
           </div>
 
-          <div className="parcel-list">
+          <div className="ag-parcel-list">
             {loadingParcels && (
-              <div className="empty-list-message">
+              <div className="ag-parcel-empty-small">
                 Cargando parcelas...
               </div>
             )}
 
-            {!loadingParcels && parcels.length === 0 && (
-              <div className="empty-list-message">
-                No tienes parcelas todavía.
-              </div>
-            )}
-
-            {parcels.map((parcel) => (
-              <button
-                key={parcel.id}
-                className={`parcel-list-item ${
-                  selectedParcelId === parcel.id
-                    ? "active"
-                    : ""
-                }`}
-                onClick={() =>
-                  setSelectedParcelId(parcel.id)
-                }
-              >
-                <div>
-                  <strong>{parcel.name}</strong>
-
-                  <span>
-                    {parcel.crop} · {parcel.hectares} ha
-                  </span>
+            {!loadingParcels &&
+              parcels.length === 0 && (
+                <div className="ag-parcel-empty-small">
+                  No tienes parcelas
+                  todavía.
                 </div>
+              )}
 
-                <span
-                  className={`parcel-status ${
-                    parcel.status === "Óptimo"
-                      ? "healthy"
-                      : "warning"
+            {parcels.map(
+              (parcel) => (
+                <button
+                  key={parcel.id}
+                  className={`ag-parcel-item ${
+                    selectedParcelId ===
+                    parcel.id
+                      ? "active"
+                      : ""
                   }`}
+                  onClick={() =>
+                    setSelectedParcelId(
+                      parcel.id
+                    )
+                  }
                 >
-                  {parcel.status}
-                </span>
-              </button>
-            ))}
+                  <div className="ag-parcel-item-main">
+                    <div className="ag-parcel-crop-icon">
+                      <Sprout
+                        size={18}
+                      />
+                    </div>
+
+                    <div>
+                      <strong>
+                        {parcel.name}
+                      </strong>
+
+                      <span>
+                        {parcel.crop}
+                        {" · "}
+                        {parcel.hectares}
+                        {" "}ha
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="ag-parcel-item-bottom">
+                    <span
+                      className={`ag-parcel-status ${
+                        parcel.status ===
+                        "Óptimo"
+                          ? "healthy"
+                          : "warning"
+                      }`}
+                    >
+                      {parcel.status}
+                    </span>
+
+                    <ArrowRight
+                      size={15}
+                    />
+                  </div>
+                </button>
+              )
+            )}
           </div>
         </aside>
 
-        <div className="parcel-map-panel">
+        <main className="ag-parcel-map-panel">
           {selectedParcel ? (
             <>
-              <div className="parcel-map-header">
+              <div className="ag-parcel-map-header">
                 <div>
-                  <span className="panel-label">
-                    Parcela seleccionada
+                  <span className="ag-parcel-kicker">
+                    PARCELA SELECCIONADA
                   </span>
 
-                  <h2>{selectedParcel.name}</h2>
+                  <h2>
+                    {selectedParcel.name}
+                  </h2>
                 </div>
 
-                <div className="parcel-info-badges">
-                  <span>
-                    {selectedParcel.hectares} ha
-                  </span>
-
+                <div className="ag-parcel-info-badges">
                   <span>
                     {selectedParcel.crop}
                   </span>
 
                   <span>
-                    {selectedParcel.stage}
+                    {
+                      selectedParcel.hectares
+                    }{" "}
+                    ha
+                  </span>
+
+                  <span>
+                    {
+                      selectedParcel.stage
+                    }
                   </span>
                 </div>
               </div>
 
-              <div className="parcel-visual">
-                <div className="parcel-ground">
-                  <div className="field-block block-1">
+              <div className="ag-parcel-visual">
+                <div className="ag-parcel-ground">
+                  <div className="ag-field-block ag-field-1">
                     🌽 🌽 🌽 🌽
                   </div>
 
-                  <div className="field-block block-2">
+                  <div className="ag-field-block ag-field-2">
                     🌽 🌽 🌽 🌽
                   </div>
 
-                  <div className="field-block block-3">
+                  <div className="ag-field-block ag-field-3">
                     🌱 🌱 🌱 🌱
                   </div>
 
                   {layers.find(
                     (layer) =>
-                      layer.id === "irrigation" &&
+                      layer.id ===
+                        "irrigation" &&
                       layer.active
                   ) && (
                     <>
-                      <div className="irrigation-line irrigation-1" />
-                      <div className="irrigation-line irrigation-2" />
+                      <div className="ag-irrigation-line ag-irrigation-1" />
+                      <div className="ag-irrigation-line ag-irrigation-2" />
                     </>
                   )}
 
-                  <div className="tractor">
+                  <div className="ag-tractor">
                     🚜
                   </div>
 
                   {layers.find(
                     (layer) =>
-                      layer.id === "moisture" &&
+                      layer.id ===
+                        "moisture" &&
                       layer.active
                   ) &&
-                    selectedParcel.moisture !== null && (
-                      <div className="layer-overlay moisture-overlay">
+                    selectedParcel.moisture !==
+                      null && (
+                      <div className="ag-layer-overlay ag-moisture-overlay">
                         Humedad{" "}
-                        {selectedParcel.moisture}%
+                        {
+                          selectedParcel.moisture
+                        }
+                        %
                       </div>
                     )}
 
                   {layers.find(
                     (layer) =>
-                      layer.id === "ndvi" &&
+                      layer.id ===
+                        "ndvi" &&
                       layer.active
                   ) && (
-                    <div className="layer-overlay ndvi-overlay">
+                    <div className="ag-layer-overlay ag-ndvi-overlay">
                       NDVI 0.78
                     </div>
                   )}
 
                   {layers.find(
                     (layer) =>
-                      layer.id === "risk" &&
+                      layer.id ===
+                        "risk" &&
                       layer.active
                   ) && (
-                    <div className="layer-overlay risk-overlay">
+                    <div className="ag-layer-overlay ag-risk-overlay">
                       {selectedParcel.status ===
                       "Óptimo"
                         ? "Riesgo bajo"
@@ -425,32 +531,49 @@ function Parcels() {
                 </div>
               </div>
 
-              <div className="parcel-data-strip">
+              <div className="ag-parcel-data-strip">
                 <div>
-                  <span>Riego</span>
+                  <Droplets size={18} />
+
+                  <span>
+                    Riego
+                  </span>
 
                   <strong>
-                    {selectedParcel.irrigation !== null
+                    {selectedParcel.irrigation !==
+                    null
                       ? `${selectedParcel.irrigation} mm/día`
                       : "Sin dato"}
                   </strong>
                 </div>
 
                 <div>
-                  <span>Humedad</span>
+                  <Activity size={18} />
+
+                  <span>
+                    Humedad
+                  </span>
 
                   <strong>
-                    {selectedParcel.moisture !== null
+                    {selectedParcel.moisture !==
+                    null
                       ? `${selectedParcel.moisture}%`
                       : "Sin dato"}
                   </strong>
                 </div>
 
                 <div>
-                  <span>Fertilizante</span>
+                  <FlaskConical
+                    size={18}
+                  />
+
+                  <span>
+                    Fertilizante
+                  </span>
 
                   <strong>
-                    {selectedParcel.fertilizer !== null
+                    {selectedParcel.fertilizer !==
+                    null
                       ? `${selectedParcel.fertilizer} kg/ha`
                       : "Sin dato"}
                   </strong>
@@ -458,20 +581,23 @@ function Parcels() {
               </div>
             </>
           ) : (
-            <div className="empty-parcel-state">
-              <Sprout size={54} />
+            <div className="ag-parcel-empty">
+              <div>
+                <Sprout size={50} />
+              </div>
 
               <h3>
-                No tienes parcelas todavía
+                Sin parcelas registradas
               </h3>
 
               <p>
-                Crea tu primera parcela para comenzar
-                a trabajar con AgriSim.
+                Crea tu primera parcela
+                para comenzar a trabajar
+                con AgriSim.
               </p>
 
               <button
-                className="primary-button"
+                className="ag-btn ag-btn-primary"
                 onClick={() =>
                   setShowModal(true)
                 }
@@ -481,56 +607,72 @@ function Parcels() {
               </button>
             </div>
           )}
-        </div>
+        </main>
 
-        <aside className="layers-panel">
-          <div className="layers-header">
-            <Layers size={20} />
+        <aside className="ag-layers-panel">
+          <div className="ag-layers-header">
+            <div className="ag-layers-title-icon">
+              <Layers size={20} />
+            </div>
 
             <div>
-              <span className="panel-label">
-                Control visual
+              <span>
+                CONTROL VISUAL
               </span>
 
-              <h2>Capas</h2>
+              <h2>
+                Capas
+              </h2>
             </div>
           </div>
 
-          <div className="layers-list">
-            {layers.map((layer) => (
-              <button
-                key={layer.id}
-                className={`layer-item ${
-                  layer.active ? "active" : ""
-                }`}
-                onClick={() =>
-                  toggleLayer(layer.id)
-                }
-              >
-                <div className="layer-icon">
-                  {layer.icon}
-                </div>
-
-                <div className="layer-text">
-                  <strong>{layer.name}</strong>
-
-                  <span>
-                    {layer.description}
-                  </span>
-                </div>
-
-                <div
-                  className={`layer-switch ${
-                    layer.active ? "on" : ""
+          <div className="ag-layers-list">
+            {layers.map(
+              (layer) => (
+                <button
+                  key={layer.id}
+                  className={`ag-layer-item ${
+                    layer.active
+                      ? "active"
+                      : ""
                   }`}
+                  onClick={() =>
+                    toggleLayer(
+                      layer.id
+                    )
+                  }
                 >
-                  <div className="switch-dot" />
-                </div>
-              </button>
-            ))}
+                  <div className="ag-layer-icon">
+                    {layer.icon}
+                  </div>
+
+                  <div className="ag-layer-text">
+                    <strong>
+                      {layer.name}
+                    </strong>
+
+                    <span>
+                      {
+                        layer.description
+                      }
+                    </span>
+                  </div>
+
+                  <div
+                    className={`ag-layer-switch ${
+                      layer.active
+                        ? "on"
+                        : ""
+                    }`}
+                  >
+                    <div />
+                  </div>
+                </button>
+              )
+            )}
           </div>
 
-          <div className="layer-summary">
+          <div className="ag-layer-summary">
             <Sprout size={18} />
 
             <div>
@@ -541,9 +683,11 @@ function Parcels() {
               <strong>
                 {
                   layers.filter(
-                    (layer) => layer.active
+                    (layer) =>
+                      layer.active
                   ).length
-                }
+                }{" "}
+                / {layers.length}
               </strong>
             </div>
           </div>
@@ -552,93 +696,133 @@ function Parcels() {
 
       {showModal && (
         <div
-          className="drawer-backdrop"
-          onClick={closeModal}
+          className="ag-drawer-backdrop"
+          onMouseDown={closeModal}
         >
           <aside
-            className="parcel-drawer"
-            onClick={(event) => event.stopPropagation()}
+            className="ag-parcel-drawer"
+            onMouseDown={(event) =>
+              event.stopPropagation()
+            }
           >
-            <div className="drawer-header">
+            <div className="ag-drawer-header">
               <div>
-                <span className="drawer-eyebrow">
-                  AGRISIM · GESTIÓN DE PREDIOS
+                <span className="ag-page-eyebrow">
+                  NUEVO PREDIO
                 </span>
 
-                <h2>Nueva parcela</h2>
+                <h2>
+                  Nueva parcela
+                </h2>
 
                 <p>
-                  Registra la información básica de la parcela. Después
-                  podremos agregar suelo, clima y otras capas.
+                  Registra las condiciones
+                  principales del cultivo.
                 </p>
               </div>
 
               <button
                 type="button"
-                className="drawer-close"
+                className="ag-drawer-close"
                 onClick={closeModal}
-                aria-label="Cerrar"
+                disabled={savingParcel}
               >
-                <X size={21} />
+                <X size={20} />
               </button>
             </div>
 
             <form
-              className="drawer-form"
+              className="ag-drawer-form"
               onSubmit={createParcel}
             >
-              <div className="drawer-section">
-                <div className="drawer-section-title">
-                  <span className="section-number">01</span>
+              <section className="ag-drawer-section">
+                <div className="ag-drawer-section-title">
+                  <span>01</span>
 
                   <div>
-                    <strong>Identificación</strong>
-                    <span>Información general de la parcela</span>
+                    <strong>
+                      Identificación
+                    </strong>
+
+                    <small>
+                      Datos básicos del
+                      predio
+                    </small>
                   </div>
                 </div>
 
-                <div className="form-group">
-                  <label>Nombre de la parcela</label>
+                <div className="ag-form-group ag-form-full">
+                  <label>
+                    Nombre de la parcela
+                  </label>
 
                   <input
                     type="text"
                     name="name"
-                    placeholder="Ej. Parcela 14F"
+                    placeholder="Ej. Parcela Norte"
                     value={formData.name}
-                    onChange={handleInputChange}
+                    onChange={
+                      handleInputChange
+                    }
                     required
                   />
                 </div>
 
-                <div className="drawer-two-columns">
-                  <div className="form-group">
-                    <label>Cultivo</label>
+                <div className="ag-form-row">
+                  <div className="ag-form-group">
+                    <label>
+                      Cultivo
+                    </label>
 
                     <select
                       name="crop"
-                      value={formData.crop}
-                      onChange={handleInputChange}
+                      value={
+                        formData.crop
+                      }
+                      onChange={
+                        handleInputChange
+                      }
                     >
-                      <option>Maíz</option>
-                      <option>Trigo</option>
-                      <option>Sorgo</option>
-                      <option>Frijol</option>
-                      <option>Cebada</option>
+                      <option>
+                        Maíz
+                      </option>
+
+                      <option>
+                        Trigo
+                      </option>
+
+                      <option>
+                        Sorgo
+                      </option>
+
+                      <option>
+                        Frijol
+                      </option>
+
+                      <option>
+                        Cebada
+                      </option>
                     </select>
                   </div>
 
-                  <div className="form-group">
-                    <label>Superficie</label>
+                  <div className="ag-form-group">
+                    <label>
+                      Superficie
+                    </label>
 
-                    <div className="input-with-unit">
+                    <div className="ag-input-with-unit">
                       <input
                         type="number"
                         step="0.1"
                         min="0"
                         name="hectares"
                         placeholder="12.5"
-                        value={formData.hectares}
-                        onChange={handleInputChange}
+                        value={
+                          formData.hectares
+                        }
+                        onChange={
+                          handleInputChange
+                        }
                         required
                       />
 
@@ -647,115 +831,174 @@ function Parcels() {
                   </div>
                 </div>
 
-                <div className="form-group">
-                  <label>Etapa del cultivo</label>
+                <div className="ag-form-group ag-form-full">
+                  <label>
+                    Etapa del cultivo
+                  </label>
 
                   <select
                     name="stage"
-                    value={formData.stage}
-                    onChange={handleInputChange}
+                    value={
+                      formData.stage
+                    }
+                    onChange={
+                      handleInputChange
+                    }
                   >
-                    <option>Siembra</option>
-                    <option>Emergencia</option>
-                    <option>Vegetativo</option>
-                    <option>Floración</option>
-                    <option>Maduración</option>
-                    <option>Cosecha</option>
+                    <option>
+                      Siembra
+                    </option>
+
+                    <option>
+                      Emergencia
+                    </option>
+
+                    <option>
+                      Vegetativo
+                    </option>
+
+                    <option>
+                      Floración
+                    </option>
+
+                    <option>
+                      Maduración
+                    </option>
+
+                    <option>
+                      Cosecha
+                    </option>
                   </select>
                 </div>
-              </div>
+              </section>
 
-              <div className="drawer-section">
-                <div className="drawer-section-title">
-                  <span className="section-number">02</span>
+              <section className="ag-drawer-section">
+                <div className="ag-drawer-section-title">
+                  <span>02</span>
 
                   <div>
-                    <strong>Condiciones actuales</strong>
-                    <span>Variables iniciales para el análisis</span>
+                    <strong>
+                      Condiciones actuales
+                    </strong>
+
+                    <small>
+                      Variables iniciales
+                      de la parcela
+                    </small>
                   </div>
                 </div>
 
-                <div className="form-group">
-                  <div className="field-label-row">
-                    <label>Riego</label>
-                    <span className="field-unit">mm/día</span>
-                  </div>
+                <div className="ag-form-group ag-form-full">
+                  <label>
+                    Riego
+                  </label>
 
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    name="irrigation"
-                    placeholder="4.5"
-                    value={formData.irrigation}
-                    onChange={handleInputChange}
-                  />
+                  <div className="ag-input-with-unit">
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      name="irrigation"
+                      placeholder="4.5"
+                      value={
+                        formData.irrigation
+                      }
+                      onChange={
+                        handleInputChange
+                      }
+                    />
+
+                    <span>
+                      mm/día
+                    </span>
+                  </div>
                 </div>
 
-                <div className="form-group">
-                  <div className="field-label-row">
-                    <label>Humedad del suelo</label>
-                    <span className="field-unit">%</span>
-                  </div>
+                <div className="ag-form-group ag-form-full">
+                  <label>
+                    Humedad del suelo
+                  </label>
 
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    name="moisture"
-                    placeholder="68"
-                    value={formData.moisture}
-                    onChange={handleInputChange}
-                  />
+                  <div className="ag-input-with-unit">
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      name="moisture"
+                      placeholder="68"
+                      value={
+                        formData.moisture
+                      }
+                      onChange={
+                        handleInputChange
+                      }
+                    />
+
+                    <span>%</span>
+                  </div>
                 </div>
 
-                <div className="form-group">
-                  <div className="field-label-row">
-                    <label>Fertilizante</label>
-                    <span className="field-unit">kg/ha</span>
-                  </div>
+                <div className="ag-form-group ag-form-full">
+                  <label>
+                    Fertilizante
+                  </label>
 
-                  <input
-                    type="number"
-                    min="0"
-                    name="fertilizer"
-                    placeholder="120"
-                    value={formData.fertilizer}
-                    onChange={handleInputChange}
-                  />
+                  <div className="ag-input-with-unit">
+                    <input
+                      type="number"
+                      min="0"
+                      name="fertilizer"
+                      placeholder="120"
+                      value={
+                        formData.fertilizer
+                      }
+                      onChange={
+                        handleInputChange
+                      }
+                    />
+
+                    <span>
+                      kg/ha
+                    </span>
+                  </div>
                 </div>
+              </section>
+
+              <div className="ag-drawer-note">
+                <Sprout size={19} />
+
+                <p>
+                  Estos valores sirven como
+                  punto de partida para las
+                  simulaciones. Después podrás
+                  experimentar con distintos
+                  escenarios sin modificar la
+                  parcela original.
+                </p>
               </div>
 
-              <div className="drawer-info">
-                <Sprout size={20} />
-
-                <div>
-                  <strong>¿Qué ocurrirá después?</strong>
-                  <span>
-                    AgriSim guardará esta parcela en tu cuenta. Más adelante
-                    podremos agregar coordenadas, suelo, clima, riego y datos
-                    históricos.
-                  </span>
-                </div>
-              </div>
-
-              <div className="drawer-actions">
+              <div className="ag-drawer-actions">
                 <button
                   type="button"
-                  className="secondary-button"
+                  className="ag-btn ag-btn-light"
                   onClick={closeModal}
-                  disabled={savingParcel}
+                  disabled={
+                    savingParcel
+                  }
                 >
                   Cancelar
                 </button>
 
                 <button
                   type="submit"
-                  className="primary-button drawer-create-button"
-                  disabled={savingParcel}
+                  className="ag-btn ag-btn-primary"
+                  disabled={
+                    savingParcel
+                  }
                 >
-                  <Plus size={18} />
-                  {savingParcel ? "Guardando..." : "Crear parcela"}
+                  {savingParcel
+                    ? "Guardando..."
+                    : "Crear parcela"}
                 </button>
               </div>
             </form>

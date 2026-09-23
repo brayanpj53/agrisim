@@ -1,5 +1,8 @@
-import { useEffect, useState } from "react";
-import { supabase } from "../lib/supabase";
+import {
+  useEffect,
+  useState,
+} from "react";
+
 import {
   Calculator,
   Droplets,
@@ -10,7 +13,15 @@ import {
   Save,
   Trash2,
   History,
+  FlaskConical,
+  Gauge,
+  Coins,
+  RotateCcw,
+  Play,
+  PackageOpen,
 } from "lucide-react";
+
+import { supabase } from "../lib/supabase";
 
 type Parcel = {
   id: number;
@@ -54,48 +65,82 @@ type SavedSimulation = {
 };
 
 function Simulations() {
-  const [parcels, setParcels] = useState<Parcel[]>([]);
-  const [selectedParcelId, setSelectedParcelId] =
-    useState<number | null>(null);
+  const [parcels, setParcels] =
+    useState<Parcel[]>([]);
 
-  const [pricePerTon, setPricePerTon] = useState(5400);
-  const [irrigation, setIrrigation] = useState(4.5);
-  const [fertilizer, setFertilizer] = useState(120);
-  const [moisture, setMoisture] = useState(68);
+  const [
+    selectedParcelId,
+    setSelectedParcelId,
+  ] = useState<number | null>(null);
+
+  const [
+    pricePerTon,
+    setPricePerTon,
+  ] = useState(5400);
+
+  const [
+    irrigation,
+    setIrrigation,
+  ] = useState(4.5);
+
+  const [
+    fertilizer,
+    setFertilizer,
+  ] = useState(120);
+
+  const [
+    moisture,
+    setMoisture,
+  ] = useState(68);
 
   const [result, setResult] =
-    useState<SimulationResult | null>(null);
+    useState<SimulationResult | null>(
+      null
+    );
 
-  const [savedSimulations, setSavedSimulations] =
-    useState<SavedSimulation[]>([]);
+  const [
+    savedSimulations,
+    setSavedSimulations,
+  ] = useState<SavedSimulation[]>([]);
 
-  const [savingSimulation, setSavingSimulation] =
-    useState(false);
+  const [
+    savingSimulation,
+    setSavingSimulation,
+  ] = useState(false);
 
-  const [loadingHistory, setLoadingHistory] =
-    useState(false);
+  const [
+    loadingHistory,
+    setLoadingHistory,
+  ] = useState(false);
 
   const selectedParcel =
     parcels.find(
-      (parcel) => parcel.id === selectedParcelId
+      (parcel) =>
+        parcel.id === selectedParcelId
     ) ?? null;
+
+  /* =========================
+     CARGAR PARCELAS
+  ========================= */
 
   useEffect(() => {
     const loadParcels = async () => {
-      const { data, error } = await supabase
-        .from("parcels")
-        .select(
-          "id, name, crop, hectares, irrigation, moisture, fertilizer"
-        )
-        .order("created_at", {
-          ascending: true,
-        });
+      const { data, error } =
+        await supabase
+          .from("parcels")
+          .select(
+            "id, name, crop, hectares, irrigation, moisture, fertilizer"
+          )
+          .order("created_at", {
+            ascending: true,
+          });
 
       if (error) {
         console.error(
           "Error cargando parcelas:",
           error
         );
+
         return;
       }
 
@@ -104,7 +149,9 @@ function Simulations() {
 
       setParcels(loadedParcels);
 
-      if (loadedParcels.length > 0) {
+      if (
+        loadedParcels.length > 0
+      ) {
         const firstParcel =
           loadedParcels[0];
 
@@ -112,37 +159,34 @@ function Simulations() {
           firstParcel.id
         );
 
-        if (
-          firstParcel.irrigation !== null
-        ) {
-          setIrrigation(
-            firstParcel.irrigation
-          );
-        }
+        setIrrigation(
+          firstParcel.irrigation ??
+            4.5
+        );
 
-        if (
-          firstParcel.fertilizer !== null
-        ) {
-          setFertilizer(
-            firstParcel.fertilizer
-          );
-        }
+        setFertilizer(
+          firstParcel.fertilizer ??
+            120
+        );
 
-        if (
-          firstParcel.moisture !== null
-        ) {
-          setMoisture(
-            firstParcel.moisture
-          );
-        }
+        setMoisture(
+          firstParcel.moisture ??
+            68
+        );
       }
     };
 
     loadParcels();
   }, []);
 
+  /* =========================
+     HISTORIAL
+  ========================= */
+
   useEffect(() => {
-    if (selectedParcelId === null) {
+    if (
+      selectedParcelId === null
+    ) {
       return;
     }
 
@@ -181,67 +225,61 @@ function Simulations() {
     loadHistory();
   }, [selectedParcelId]);
 
+  /* =========================
+     CAMBIO DE PARCELA
+  ========================= */
+
   const handleParcelChange = (
     parcelId: number
   ) => {
-    setLoadingHistory(true);
-    setSavedSimulations([]);
-
     setSelectedParcelId(parcelId);
 
-    const parcel = parcels.find(
-      (item) => item.id === parcelId
-    );
+    const parcel =
+      parcels.find(
+        (item) =>
+          item.id === parcelId
+      );
 
-    if (!parcel) {
-      return;
-    }
-
-    if (parcel.irrigation !== null) {
+    if (parcel) {
       setIrrigation(
-        parcel.irrigation
+        parcel.irrigation ?? 4.5
       );
-    }
 
-    if (parcel.fertilizer !== null) {
       setFertilizer(
-        parcel.fertilizer
+        parcel.fertilizer ?? 120
       );
-    }
 
-    if (parcel.moisture !== null) {
       setMoisture(
-        parcel.moisture
+        parcel.moisture ?? 68
       );
     }
 
     setResult(null);
+    setSavedSimulations([]);
   };
+
+  /* =========================
+     SIMULACIÓN
+  ========================= */
 
   const runSimulation = () => {
     if (!selectedParcel) {
-      alert(
-        "Selecciona una parcela."
-      );
       return;
     }
 
-    /*
-      MOTOR V1 PROVISIONAL
+    let baseYield = 6;
 
-      Estas relaciones todavía no son
-      un modelo agronómico validado.
-
-      Nos sirven para construir la
-      arquitectura funcional de AgriSim.
-    */
-
-    const baseYield =
+    if (
       selectedParcel.crop === "Maíz"
-        ? 8
-        : selectedParcel.crop === "Trigo"
-        ? 5.5
-        : 6;
+    ) {
+      baseYield = 8;
+    }
+
+    if (
+      selectedParcel.crop === "Trigo"
+    ) {
+      baseYield = 5.5;
+    }
 
     const irrigationFactor =
       Math.min(
@@ -310,8 +348,7 @@ function Simulations() {
       pricePerTon;
 
     const profit =
-      revenue -
-      totalCost;
+      revenue - totalCost;
 
     let risk = "Bajo";
 
@@ -340,222 +377,324 @@ function Simulations() {
     });
   };
 
-  const saveSimulation = async () => {
-    if (
-      !selectedParcel ||
-      !result
-    ) {
-      return;
-    }
+  /* =========================
+     GUARDAR
+  ========================= */
 
-    setSavingSimulation(true);
+  const saveSimulation =
+    async () => {
+      if (
+        !result ||
+        !selectedParcelId
+      ) {
+        return;
+      }
 
-    const {
-      data: { user },
-      error: userError,
-    } =
-      await supabase.auth.getUser();
+      setSavingSimulation(true);
 
-    if (
-      userError ||
-      !user
-    ) {
-      console.error(
-        "Error obteniendo usuario:",
-        userError
-      );
+      const {
+        data: { user },
+        error: userError,
+      } =
+        await supabase.auth.getUser();
 
-      alert(
-        "No hay un usuario autenticado."
-      );
-
-      setSavingSimulation(false);
-      return;
-    }
-
-    const { data, error } =
-      await supabase
-        .from("simulations")
-        .insert({
-          user_id: user.id,
-
-          parcel_id:
-            selectedParcel.id,
-
-          irrigation,
-          fertilizer,
-          moisture,
-
-          price_per_ton:
-            pricePerTon,
-
-          estimated_yield:
-            result.estimatedYield,
-
-          total_production:
-            result.totalProduction,
-
-          water_use:
-            result.waterUse,
-
-          total_cost:
-            result.totalCost,
-
-          revenue:
-            result.revenue,
-
-          profit:
-            result.profit,
-
-          risk:
-            result.risk,
-        })
-        .select()
-        .single();
-
-    if (error) {
-      console.error(
-        "Error guardando simulación:",
-        error
-      );
-
-      alert(
-        "No se pudo guardar la simulación."
-      );
-
-      setSavingSimulation(false);
-      return;
-    }
-
-    const newSimulation =
-      data as SavedSimulation;
-
-    setSavedSimulations(
-      (current) => [
-        newSimulation,
-        ...current,
-      ]
-    );
-
-    setSavingSimulation(false);
-  };
-
-  const deleteSimulation = async (
-    simulationId: number
-  ) => {
-    const confirmed =
-      window.confirm(
-        "¿Eliminar esta simulación del historial?"
-      );
-
-    if (!confirmed) {
-      return;
-    }
-
-    const { error } =
-      await supabase
-        .from("simulations")
-        .delete()
-        .eq(
-          "id",
-          simulationId
+      if (
+        userError ||
+        !user
+      ) {
+        console.error(
+          "Error obteniendo usuario:",
+          userError
         );
 
-    if (error) {
-      console.error(
-        "Error eliminando simulación:",
-        error
+        alert(
+          "No hay un usuario autenticado."
+        );
+
+        setSavingSimulation(false);
+        return;
+      }
+
+      const { data, error } =
+        await supabase
+          .from("simulations")
+          .insert({
+            user_id: user.id,
+            parcel_id:
+              selectedParcelId,
+
+            irrigation,
+            fertilizer,
+            moisture,
+            price_per_ton:
+              pricePerTon,
+
+            estimated_yield:
+              result.estimatedYield,
+
+            total_production:
+              result.totalProduction,
+
+            water_use:
+              result.waterUse,
+
+            total_cost:
+              result.totalCost,
+
+            revenue:
+              result.revenue,
+
+            profit:
+              result.profit,
+
+            risk:
+              result.risk,
+          })
+          .select()
+          .single();
+
+      if (error) {
+        console.error(
+          "Error guardando simulación:",
+          error
+        );
+
+        alert(
+          "No se pudo guardar la simulación."
+        );
+
+        setSavingSimulation(false);
+        return;
+      }
+
+      setSavedSimulations(
+        (current) => [
+          data as SavedSimulation,
+          ...current,
+        ]
       );
 
-      alert(
-        "No se pudo eliminar la simulación."
-      );
+      setSavingSimulation(false);
+    };
 
-      return;
-    }
+  /* =========================
+     ELIMINAR
+  ========================= */
 
-    setSavedSimulations(
-      (current) =>
-        current.filter(
-          (simulation) =>
-            simulation.id !==
+  const deleteSimulation =
+    async (
+      simulationId: number
+    ) => {
+      const { error } =
+        await supabase
+          .from("simulations")
+          .delete()
+          .eq(
+            "id",
             simulationId
-        )
-    );
-  };
+          );
+
+      if (error) {
+        console.error(
+          "Error eliminando simulación:",
+          error
+        );
+
+        return;
+      }
+
+      setSavedSimulations(
+        (current) =>
+          current.filter(
+            (simulation) =>
+              simulation.id !==
+              simulationId
+          )
+      );
+    };
+
+  /* =========================
+     CARGAR ESCENARIO
+  ========================= */
 
   const loadSavedSimulation = (
     simulation: SavedSimulation
   ) => {
     setIrrigation(
-      simulation.irrigation
+      Number(
+        simulation.irrigation
+      )
     );
 
     setFertilizer(
-      simulation.fertilizer
+      Number(
+        simulation.fertilizer
+      )
     );
 
     setMoisture(
-      simulation.moisture
+      Number(
+        simulation.moisture
+      )
     );
 
     setPricePerTon(
-      simulation.price_per_ton
+      Number(
+        simulation.price_per_ton
+      )
     );
 
     setResult({
       estimatedYield:
-        simulation.estimated_yield,
+        Number(
+          simulation.estimated_yield
+        ),
 
       totalProduction:
-        simulation.total_production,
+        Number(
+          simulation.total_production
+        ),
 
       waterUse:
-        simulation.water_use,
+        Number(
+          simulation.water_use
+        ),
 
       totalCost:
-        simulation.total_cost,
+        Number(
+          simulation.total_cost
+        ),
 
       revenue:
-        simulation.revenue,
+        Number(
+          simulation.revenue
+        ),
 
       profit:
-        simulation.profit,
+        Number(
+          simulation.profit
+        ),
 
       risk:
         simulation.risk,
     });
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
+  const resetScenario = () => {
+    if (!selectedParcel) {
+      return;
+    }
+
+    setIrrigation(
+      selectedParcel.irrigation ??
+        4.5
+    );
+
+    setFertilizer(
+      selectedParcel.fertilizer ??
+        120
+    );
+
+    setMoisture(
+      selectedParcel.moisture ??
+        68
+    );
+
+    setPricePerTon(5400);
+
+    setResult(null);
+  };
+
+  /* =========================
+     SIN PARCELAS
+  ========================= */
+
+  if (
+    parcels.length === 0
+  ) {
+    return (
+      <section className="ag-simulations">
+        <div className="ag-simulation-empty-page">
+          <div>
+            <Sprout size={48} />
+          </div>
+
+          <h2>
+            Primero necesitas una parcela
+          </h2>
+
+          <p>
+            Registra un predio antes de
+            ejecutar escenarios en
+            AgriSim.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section>
-      <div className="dashboard-header">
+    <section className="ag-simulations">
+      <header className="ag-sim-header">
         <div>
+          <span className="ag-page-eyebrow">
+            MOTOR DE ESCENARIOS
+          </span>
+
           <h1>
             Simulaciones
           </h1>
 
           <p>
-            Modifica variables,
-            evalúa escenarios y
-            guarda resultados para
-            compararlos posteriormente.
+            Modifica las condiciones del
+            cultivo y analiza su posible
+            impacto productivo y
+            financiero.
           </p>
         </div>
-      </div>
 
-      <div className="simulation-layout">
-        <div className="simulation-controls">
-          <div className="simulation-card">
-            <div className="simulation-card-title">
-              <Calculator size={20} />
+        <div className="ag-sim-header-actions">
+          <button
+            className="ag-btn ag-btn-secondary"
+            onClick={resetScenario}
+          >
+            <RotateCcw size={16} />
+            Restablecer
+          </button>
+        </div>
+      </header>
 
-              <h2>
-                Escenario
-              </h2>
+      <div className="ag-sim-main-grid">
+        {/* =====================
+            CONFIGURACIÓN
+        ====================== */}
+
+        <aside className="ag-sim-config-card">
+          <div className="ag-sim-card-header">
+            <div className="ag-sim-header-icon">
+              <Calculator
+                size={20}
+              />
             </div>
 
-            <div className="form-group">
+            <div>
+              <span>
+                ESCENARIO
+              </span>
+
+              <h2>
+                Configura variables
+              </h2>
+            </div>
+          </div>
+
+          <div className="ag-sim-config-body">
+            <div className="ag-sim-field">
               <label>
                 Parcela
               </label>
@@ -565,9 +704,7 @@ function Simulations() {
                   selectedParcelId ??
                   ""
                 }
-                onChange={(
-                  event
-                ) =>
+                onChange={(event) =>
                   handleParcelChange(
                     Number(
                       event.target.value
@@ -575,14 +712,6 @@ function Simulations() {
                   )
                 }
               >
-                {parcels.length ===
-                  0 && (
-                  <option value="">
-                    No hay parcelas
-                    disponibles
-                  </option>
-                )}
-
                 {parcels.map(
                   (parcel) => (
                     <option
@@ -593,18 +722,42 @@ function Simulations() {
                         parcel.id
                       }
                     >
-                      {parcel.name}
+                      {
+                        parcel.name
+                      }
                       {" · "}
-                      {parcel.crop}
+                      {
+                        parcel.crop
+                      }
                     </option>
                   )
                 )}
               </select>
+
+              {selectedParcel && (
+                <div className="ag-sim-parcel-meta">
+                  <span>
+                    {
+                      selectedParcel.crop
+                    }
+                  </span>
+
+                  <span>
+                    {
+                      selectedParcel.hectares
+                    }{" "}
+                    ha
+                  </span>
+                </div>
+              )}
             </div>
 
-            <div className="simulation-field">
-              <div className="simulation-label-row">
+            <div className="ag-sim-field">
+              <div className="ag-sim-label-row">
                 <label>
+                  <Droplets
+                    size={15}
+                  />
                   Riego
                 </label>
 
@@ -621,56 +774,67 @@ function Simulations() {
                 min="0"
                 max="8"
                 step="0.1"
-                value={
-                  irrigation
-                }
-                onChange={(
-                  event
-                ) =>
+                value={irrigation}
+                onChange={(event) =>
                   setIrrigation(
                     Number(
-                      event.target.value
+                      event.target
+                        .value
                     )
                   )
                 }
               />
+
+              <div className="ag-range-scale">
+                <span>0</span>
+                <span>8</span>
+              </div>
             </div>
 
-            <div className="simulation-field">
-              <div className="simulation-label-row">
+            <div className="ag-sim-field">
+              <div className="ag-sim-label-row">
                 <label>
+                  <FlaskConical
+                    size={15}
+                  />
                   Fertilizante
                 </label>
 
                 <strong>
-                  {fertilizer}{" "}
-                  kg/ha
+                  {fertilizer} kg/ha
                 </strong>
               </div>
 
               <input
                 type="range"
                 min="0"
-                max="250"
+                max="220"
                 step="5"
-                value={
-                  fertilizer
-                }
-                onChange={(
-                  event
-                ) =>
+                value={fertilizer}
+                onChange={(event) =>
                   setFertilizer(
                     Number(
-                      event.target.value
+                      event.target
+                        .value
                     )
                   )
                 }
               />
+
+              <div className="ag-range-scale">
+                <span>0</span>
+                <span>
+                  220
+                </span>
+              </div>
             </div>
 
-            <div className="simulation-field">
-              <div className="simulation-label-row">
+            <div className="ag-sim-field">
+              <div className="ag-sim-label-row">
                 <label>
+                  <Gauge
+                    size={15}
+                  />
                   Humedad del suelo
                 </label>
 
@@ -684,358 +848,451 @@ function Simulations() {
                 min="0"
                 max="100"
                 step="1"
-                value={
-                  moisture
-                }
-                onChange={(
-                  event
-                ) =>
+                value={moisture}
+                onChange={(event) =>
                   setMoisture(
                     Number(
-                      event.target.value
+                      event.target
+                        .value
                     )
                   )
                 }
               />
+
+              <div className="ag-range-scale">
+                <span>0%</span>
+                <span>
+                  100%
+                </span>
+              </div>
             </div>
 
-            <div className="form-group">
-              <label>
-                Precio esperado
-                ($/ton)
-              </label>
+            <div className="ag-sim-field">
+              <div className="ag-sim-label-row">
+                <label>
+                  <Coins
+                    size={15}
+                  />
+                  Precio esperado
+                </label>
+
+                <strong>
+                  $
+                  {pricePerTon.toLocaleString(
+                    "es-MX"
+                  )}
+                  /t
+                </strong>
+              </div>
 
               <input
-                type="number"
-                min="0"
+                type="range"
+                min="2500"
+                max="9000"
+                step="100"
                 value={
                   pricePerTon
                 }
-                onChange={(
-                  event
-                ) =>
+                onChange={(event) =>
                   setPricePerTon(
                     Number(
-                      event.target.value
+                      event.target
+                        .value
                     )
                   )
                 }
               />
+
+              <div className="ag-range-scale">
+                <span>
+                  $2,500
+                </span>
+
+                <span>
+                  $9,000
+                </span>
+              </div>
             </div>
 
             <button
-              className="primary-button simulate-button"
+              className="ag-sim-run-button"
               onClick={
                 runSimulation
               }
-              disabled={
-                !selectedParcel
-              }
             >
-              <Calculator
-                size={18}
+              <Play
+                size={17}
+                fill="currentColor"
               />
 
               Ejecutar simulación
             </button>
           </div>
-        </div>
+        </aside>
 
-        <div className="simulation-results">
+        {/* =====================
+            RESULTADOS
+        ====================== */}
+
+        <div className="ag-sim-results-area">
           {!result ? (
-            <div className="simulation-empty">
-              <Sprout
-                size={56}
-              />
+            <div className="ag-sim-empty-results">
+              <div>
+                <Calculator
+                  size={46}
+                />
+              </div>
 
               <h2>
-                Configura un escenario
+                Ejecuta un escenario
               </h2>
 
               <p>
-                Modifica las variables
-                de la izquierda y
-                ejecuta una simulación
-                para obtener resultados.
+                Ajusta las variables de
+                la izquierda y ejecuta
+                una simulación para ver
+                los resultados.
               </p>
             </div>
           ) : (
             <>
-              <div className="simulation-result-grid">
-                <div className="result-card">
-                  <Sprout
-                    size={22}
-                  />
+              <section className="ag-sim-results-card">
+                <div className="ag-sim-results-header">
+                  <div>
+                    <span>
+                      RESULTADOS
+                    </span>
 
-                  <span>
-                    Rendimiento estimado
-                  </span>
+                    <h2>
+                      Impacto estimado
+                    </h2>
+                  </div>
 
-                  <strong>
-                    {result.estimatedYield.toFixed(
-                      2
-                    )}{" "}
-                    t/ha
-                  </strong>
+                  <button
+                    className="ag-btn ag-btn-primary"
+                    onClick={
+                      saveSimulation
+                    }
+                    disabled={
+                      savingSimulation
+                    }
+                  >
+                    <Save
+                      size={16}
+                    />
+
+                    {savingSimulation
+                      ? "Guardando..."
+                      : "Guardar escenario"}
+                  </button>
                 </div>
 
-                <div className="result-card">
-                  <TrendingUp
-                    size={22}
-                  />
+                <div className="ag-sim-result-grid">
+                  <article className="ag-sim-result-card yield">
+                    <Sprout
+                      size={21}
+                    />
 
-                  <span>
-                    Producción total
-                  </span>
+                    <span>
+                      Rendimiento estimado
+                    </span>
 
-                  <strong>
-                    {result.totalProduction.toFixed(
-                      1
-                    )}{" "}
-                    t
-                  </strong>
+                    <strong>
+                      {result.estimatedYield.toFixed(
+                        2
+                      )}
+                    </strong>
+
+                    <small>
+                      t/ha
+                    </small>
+                  </article>
+
+                  <article className="ag-sim-result-card production">
+                    <PackageOpen
+                      size={21}
+                    />
+
+                    <span>
+                      Producción total
+                    </span>
+
+                    <strong>
+                      {result.totalProduction.toFixed(
+                        1
+                      )}
+                    </strong>
+
+                    <small>
+                      toneladas
+                    </small>
+                  </article>
+
+                  <article className="ag-sim-result-card water">
+                    <Droplets
+                      size={21}
+                    />
+
+                    <span>
+                      Consumo de agua
+                    </span>
+
+                    <strong>
+                      {(
+                        result.waterUse /
+                        1000000
+                      ).toFixed(1)}
+                    </strong>
+
+                    <small>
+                      ML
+                    </small>
+                  </article>
+
+                  <article className="ag-sim-result-card cost">
+                    <Wallet
+                      size={21}
+                    />
+
+                    <span>
+                      Costo estimado
+                    </span>
+
+                    <strong>
+                      $
+                      {result.totalCost.toLocaleString(
+                        "es-MX",
+                        {
+                          maximumFractionDigits:
+                            0,
+                        }
+                      )}
+                    </strong>
+
+                    <small>
+                      MXN
+                    </small>
+                  </article>
+
+                  <article className="ag-sim-result-card revenue">
+                    <TrendingUp
+                      size={21}
+                    />
+
+                    <span>
+                      Ingreso estimado
+                    </span>
+
+                    <strong>
+                      $
+                      {result.revenue.toLocaleString(
+                        "es-MX",
+                        {
+                          maximumFractionDigits:
+                            0,
+                        }
+                      )}
+                    </strong>
+
+                    <small>
+                      MXN
+                    </small>
+                  </article>
+
+                  <article className="ag-sim-result-card profit">
+                    <Coins
+                      size={21}
+                    />
+
+                    <span>
+                      Utilidad estimada
+                    </span>
+
+                    <strong>
+                      $
+                      {result.profit.toLocaleString(
+                        "es-MX",
+                        {
+                          maximumFractionDigits:
+                            0,
+                        }
+                      )}
+                    </strong>
+
+                    <small>
+                      MXN
+                    </small>
+                  </article>
+                </div>
+              </section>
+
+              {/* RIESGO */}
+
+              <section className="ag-sim-risk-card">
+                <div className="ag-sim-risk-info">
+                  <div className="ag-sim-risk-icon">
+                    <TriangleAlert
+                      size={20}
+                    />
+                  </div>
+
+                  <div>
+                    <span>
+                      EVALUACIÓN
+                    </span>
+
+                    <h3>
+                      Riesgo del escenario
+                    </h3>
+
+                    <p>
+                      Basado en riego y
+                      humedad del suelo.
+                    </p>
+                  </div>
                 </div>
 
-                <div className="result-card">
-                  <Droplets
-                    size={22}
-                  />
+                <div className="ag-sim-risk-visual">
+                  <div className="ag-risk-scale">
+                    <div className="ag-risk-low" />
 
-                  <span>
-                    Consumo de agua
-                  </span>
+                    <div className="ag-risk-medium" />
 
-                  <strong>
-                    {(
-                      result.waterUse /
-                      1000000
-                    ).toFixed(
-                      1
-                    )}{" "}
-                    ML
-                  </strong>
+                    <div className="ag-risk-high" />
+                  </div>
+
+                  <div
+                    className={`ag-risk-badge ${result.risk.toLowerCase()}`}
+                  >
+                    {result.risk}
+                  </div>
                 </div>
-
-                <div className="result-card">
-                  <Wallet
-                    size={22}
-                  />
-
-                  <span>
-                    Costo estimado
-                  </span>
-
-                  <strong>
-                    $
-                    {result.totalCost.toLocaleString(
-                      "es-MX",
-                      {
-                        maximumFractionDigits:
-                          0,
-                      }
-                    )}
-                  </strong>
-                </div>
-
-                <div className="result-card">
-                  <TrendingUp
-                    size={22}
-                  />
-
-                  <span>
-                    Ingreso estimado
-                  </span>
-
-                  <strong>
-                    $
-                    {result.revenue.toLocaleString(
-                      "es-MX",
-                      {
-                        maximumFractionDigits:
-                          0,
-                      }
-                    )}
-                  </strong>
-                </div>
-
-                <div className="result-card profit-card">
-                  <Wallet
-                    size={22}
-                  />
-
-                  <span>
-                    Utilidad estimada
-                  </span>
-
-                  <strong>
-                    $
-                    {result.profit.toLocaleString(
-                      "es-MX",
-                      {
-                        maximumFractionDigits:
-                          0,
-                      }
-                    )}
-                  </strong>
-                </div>
-              </div>
-
-              <div className="risk-panel">
-                <div>
-                  <TriangleAlert
-                    size={20}
-                  />
-
-                  <span>
-                    Riesgo del escenario
-                  </span>
-                </div>
-
-                <strong
-                  className={
-                    result.risk ===
-                    "Bajo"
-                      ? "risk-low"
-                      : result.risk ===
-                        "Moderado"
-                      ? "risk-medium"
-                      : "risk-high"
-                  }
-                >
-                  {result.risk}
-                </strong>
-              </div>
-
-              <button
-                className="primary-button save-simulation-button"
-                onClick={
-                  saveSimulation
-                }
-                disabled={
-                  savingSimulation
-                }
-              >
-                <Save
-                  size={18}
-                />
-
-                {savingSimulation
-                  ? "Guardando..."
-                  : "Guardar escenario"}
-              </button>
+              </section>
             </>
           )}
         </div>
       </div>
 
-      <div className="simulation-history-section">
-        <div className="simulation-history-header">
-          <div>
-            <History
-              size={20}
-            />
+      {/* =====================
+          HISTORIAL
+      ====================== */}
+
+      <section className="ag-sim-history">
+        <div className="ag-sim-history-header">
+          <div className="ag-sim-history-title">
+            <div>
+              <History
+                size={20}
+              />
+            </div>
 
             <div>
-              <h2>
-                Historial de escenarios
-              </h2>
+              <span>
+                HISTORIAL
+              </span>
 
-              <p>
-                Simulaciones guardadas
-                para la parcela
-                seleccionada.
-              </p>
+              <h2>
+                Escenarios guardados
+              </h2>
             </div>
           </div>
 
-          <span className="history-count">
+          <span className="ag-sim-history-count">
             {
               savedSimulations.length
             }{" "}
-            guardadas
+            simulaciones
           </span>
         </div>
 
         {loadingHistory ? (
-          <div className="history-empty">
+          <div className="ag-sim-history-empty">
             Cargando historial...
           </div>
         ) : savedSimulations.length ===
           0 ? (
-          <div className="history-empty">
-            Todavía no has guardado
-            simulaciones para esta
-            parcela.
+          <div className="ag-sim-history-empty">
+            <History
+              size={32}
+            />
+
+            <p>
+              Todavía no has guardado
+              escenarios para esta
+              parcela.
+            </p>
           </div>
         ) : (
-          <div className="simulation-history-grid">
+          <div className="ag-sim-history-grid">
             {savedSimulations.map(
-              (simulation) => (
+              (
+                simulation,
+                index
+              ) => (
                 <article
-                  className="simulation-history-card"
+                  className="ag-sim-history-card"
                   key={
                     simulation.id
                   }
                 >
-                  <div className="history-card-top">
+                  <div className="ag-sim-history-card-top">
                     <div>
-                      <span className="history-date">
-                        {new Date(
-                          simulation.created_at
-                        ).toLocaleString(
-                          "es-MX"
-                        )}
+                      <span>
+                        ESCENARIO
                       </span>
 
                       <strong>
-                        {simulation.estimated_yield.toFixed(
-                          2
-                        )}{" "}
-                        t/ha
+                        #
+                        {
+                          savedSimulations.length -
+                          index
+                        }
                       </strong>
                     </div>
 
-                    <span
-                      className={`history-risk ${
-                        simulation.risk ===
-                        "Bajo"
-                          ? "low"
-                          : simulation.risk ===
-                            "Moderado"
-                          ? "medium"
-                          : "high"
-                      }`}
-                    >
-                      {
-                        simulation.risk
+                    <button
+                      type="button"
+                      className="ag-sim-delete"
+                      onClick={() =>
+                        deleteSimulation(
+                          simulation.id
+                        )
                       }
-                    </span>
+                      title="Eliminar simulación"
+                    >
+                      <Trash2
+                        size={15}
+                      />
+                    </button>
                   </div>
 
-                  <div className="history-metrics">
+                  <small>
+                    {new Date(
+                      simulation.created_at
+                    ).toLocaleString(
+                      "es-MX",
+                      {
+                        dateStyle:
+                          "medium",
+                        timeStyle:
+                          "short",
+                      }
+                    )}
+                  </small>
+
+                  <div className="ag-sim-history-stats">
                     <div>
                       <span>
-                        Riego
+                        Rendimiento
                       </span>
 
                       <strong>
-                        {
-                          simulation.irrigation
-                        }{" "}
-                        mm/día
-                      </strong>
-                    </div>
-
-                    <div>
-                      <span>
-                        Fertilizante
-                      </span>
-
-                      <strong>
-                        {
-                          simulation.fertilizer
-                        }{" "}
-                        kg/ha
+                        {Number(
+                          simulation.estimated_yield
+                        ).toFixed(
+                          2
+                        )}
+                        {" "}t/ha
                       </strong>
                     </div>
 
@@ -1046,7 +1303,9 @@ function Simulations() {
 
                       <strong>
                         $
-                        {simulation.profit.toLocaleString(
+                        {Number(
+                          simulation.profit
+                        ).toLocaleString(
                           "es-MX",
                           {
                             maximumFractionDigits:
@@ -1058,49 +1317,52 @@ function Simulations() {
 
                     <div>
                       <span>
-                        Producción
+                        Riesgo
                       </span>
 
                       <strong>
-                        {simulation.total_production.toFixed(
-                          1
-                        )}{" "}
-                        t
+                        {
+                          simulation.risk
+                        }
                       </strong>
                     </div>
                   </div>
 
-                  <div className="history-actions">
-                    <button
-                      className="history-load-button"
-                      onClick={() =>
-                        loadSavedSimulation(
-                          simulation
-                        )
-                      }
-                    >
-                      Cargar escenario
-                    </button>
+                  <button
+                    type="button"
+                    className="ag-sim-load-button"
+                    onClick={() =>
+                      loadSavedSimulation(
+                        simulation
+                      )
+                    }
+                  >
+                    Cargar escenario
 
-                    <button
-                      className="history-delete-button"
-                      onClick={() =>
-                        deleteSimulation(
-                          simulation.id
-                        )
-                      }
-                      aria-label="Eliminar simulación"
-                    >
-                      <Trash2
-                        size={17}
-                      />
-                    </button>
-                  </div>
+                    <TrendingUp
+                      size={14}
+                    />
+                  </button>
                 </article>
               )
             )}
           </div>
         )}
+      </section>
+
+      <div className="ag-sim-model-note">
+        <TriangleAlert
+          size={16}
+        />
+
+        <span>
+          Modelo experimental de
+          AgriSim v0.1. Los resultados
+          son demostrativos y todavía
+          no representan una
+          recomendación agronómica
+          validada.
+        </span>
       </div>
     </section>
   );

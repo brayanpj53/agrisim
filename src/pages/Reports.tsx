@@ -1,4 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
 import { supabase } from "../lib/supabase";
 
 import {
@@ -8,6 +13,9 @@ import {
   Sprout,
   TrendingUp,
   Wallet,
+  History,
+  CalendarDays,
+  Layers3,
 } from "lucide-react";
 
 import {
@@ -53,191 +61,276 @@ type Simulation = {
 };
 
 function Reports() {
-  const [parcels, setParcels] = useState<Parcel[]>([]);
-  const [simulations, setSimulations] = useState<Simulation[]>([]);
+  const [
+    parcels,
+    setParcels,
+  ] = useState<Parcel[]>([]);
 
-  const [selectedParcelId, setSelectedParcelId] =
-    useState<number | null>(null);
+  const [
+    simulations,
+    setSimulations,
+  ] = useState<Simulation[]>([]);
 
-  const [loading, setLoading] = useState(true);
+  const [
+    selectedParcelId,
+    setSelectedParcelId,
+  ] = useState<number | null>(
+    null
+  );
+
+  const [
+    loading,
+    setLoading,
+  ] = useState(true);
+
+  /* =========================
+     CARGAR DATOS
+  ========================= */
 
   useEffect(() => {
-    const loadReports = async () => {
-      setLoading(true);
+    const loadReports =
+      async () => {
+        setLoading(true);
 
-      const {
-        data: parcelData,
-        error: parcelError,
-      } = await supabase
-        .from("parcels")
-        .select("id, name, crop, hectares, stage")
-        .order("created_at", {
-          ascending: true,
-        });
+        const {
+          data: parcelData,
+          error: parcelError,
+        } = await supabase
+          .from("parcels")
+          .select(
+            "id, name, crop, hectares, stage"
+          )
+          .order("created_at", {
+            ascending: true,
+          });
 
-      if (parcelError) {
-        console.error(
-          "Error cargando parcelas:",
-          parcelError
-        );
+        if (parcelError) {
+          console.error(
+            "Error cargando parcelas:",
+            parcelError
+          );
 
-        setLoading(false);
-        return;
-      }
+          setLoading(false);
+          return;
+        }
 
-      const {
-        data: simulationData,
-        error: simulationError,
-      } = await supabase
-        .from("simulations")
-        .select("*")
-        .order("created_at", {
-          ascending: true,
-        });
+        const {
+          data: simulationData,
+          error: simulationError,
+        } = await supabase
+          .from("simulations")
+          .select("*")
+          .order("created_at", {
+            ascending: true,
+          });
 
-      if (simulationError) {
-        console.error(
-          "Error cargando simulaciones:",
+        if (
           simulationError
+        ) {
+          console.error(
+            "Error cargando simulaciones:",
+            simulationError
+          );
+
+          setLoading(false);
+          return;
+        }
+
+        const loadedParcels =
+          (parcelData ??
+            []) as Parcel[];
+
+        const loadedSimulations =
+          (simulationData ??
+            []) as Simulation[];
+
+        setParcels(
+          loadedParcels
         );
+
+        setSimulations(
+          loadedSimulations
+        );
+
+        if (
+          loadedParcels.length >
+          0
+        ) {
+          setSelectedParcelId(
+            loadedParcels[0].id
+          );
+        }
 
         setLoading(false);
-        return;
-      }
-
-      const loadedParcels =
-        (parcelData ?? []) as Parcel[];
-
-      const loadedSimulations =
-        (simulationData ?? []) as Simulation[];
-
-      setParcels(loadedParcels);
-      setSimulations(loadedSimulations);
-
-      if (loadedParcels.length > 0) {
-        setSelectedParcelId(
-          loadedParcels[0].id
-        );
-      }
-
-      setLoading(false);
-    };
+      };
 
     loadReports();
   }, []);
 
+  /* =========================
+     PARCELA
+  ========================= */
+
   const selectedParcel =
     parcels.find(
       (parcel) =>
-        parcel.id === selectedParcelId
+        parcel.id ===
+        selectedParcelId
     ) ?? null;
 
-  const parcelSimulations = useMemo(() => {
-    if (selectedParcelId === null) {
-      return [];
-    }
+  /* =========================
+     SIMULACIONES DE PARCELA
+  ========================= */
 
-    return simulations.filter(
-      (simulation) =>
-        simulation.parcel_id ===
-        selectedParcelId
-    );
-  }, [
-    simulations,
-    selectedParcelId,
-  ]);
+  const parcelSimulations =
+    useMemo(() => {
+      if (
+        selectedParcelId ===
+        null
+      ) {
+        return [];
+      }
+
+      return simulations.filter(
+        (simulation) =>
+          simulation.parcel_id ===
+          selectedParcelId
+      );
+    }, [
+      simulations,
+      selectedParcelId,
+    ]);
 
   const latestSimulation =
-    parcelSimulations.length > 0
+    parcelSimulations.length >
+    0
       ? parcelSimulations[
-          parcelSimulations.length - 1
+          parcelSimulations.length -
+            1
         ]
       : null;
 
-  const averages = useMemo(() => {
-    if (parcelSimulations.length === 0) {
-      return {
-        yield: 0,
-        profit: 0,
-        production: 0,
-        water: 0,
-      };
-    }
+  /* =========================
+     PROMEDIOS
+  ========================= */
 
-    const totalYield =
-      parcelSimulations.reduce(
-        (sum, simulation) =>
-          sum +
+  const averages =
+    useMemo(() => {
+      if (
+        parcelSimulations.length ===
+        0
+      ) {
+        return {
+          yield: 0,
+          profit: 0,
+          production: 0,
+          water: 0,
+        };
+      }
+
+      const totalYield =
+        parcelSimulations.reduce(
+          (
+            sum,
+            simulation
+          ) =>
+            sum +
+            Number(
+              simulation.estimated_yield
+            ),
+          0
+        );
+
+      const totalProfit =
+        parcelSimulations.reduce(
+          (
+            sum,
+            simulation
+          ) =>
+            sum +
+            Number(
+              simulation.profit
+            ),
+          0
+        );
+
+      const totalProduction =
+        parcelSimulations.reduce(
+          (
+            sum,
+            simulation
+          ) =>
+            sum +
+            Number(
+              simulation.total_production
+            ),
+          0
+        );
+
+      const totalWater =
+        parcelSimulations.reduce(
+          (
+            sum,
+            simulation
+          ) =>
+            sum +
+            Number(
+              simulation.water_use
+            ),
+          0
+        );
+
+      const count =
+        parcelSimulations.length;
+
+      return {
+        yield:
+          totalYield / count,
+
+        profit:
+          totalProfit / count,
+
+        production:
+          totalProduction /
+          count,
+
+        water:
+          totalWater / count,
+      };
+    }, [parcelSimulations]);
+
+  /* =========================
+     GRÁFICAS
+  ========================= */
+
+  const chartData =
+    parcelSimulations.map(
+      (
+        simulation,
+        index
+      ) => ({
+        name: `S${index + 1}`,
+
+        rendimiento:
           Number(
             simulation.estimated_yield
           ),
-        0
-      );
 
-    const totalProfit =
-      parcelSimulations.reduce(
-        (sum, simulation) =>
-          sum +
-          Number(simulation.profit),
-        0
-      );
-
-    const totalProduction =
-      parcelSimulations.reduce(
-        (sum, simulation) =>
-          sum +
+        utilidad:
           Number(
-            simulation.total_production
+            simulation.profit
           ),
-        0
-      );
 
-    const totalWater =
-      parcelSimulations.reduce(
-        (sum, simulation) =>
-          sum +
+        agua:
           Number(
             simulation.water_use
-          ),
-        0
-      );
+          ) / 1000000,
+      })
+    );
 
-    const count =
-      parcelSimulations.length;
-
-    return {
-      yield:
-        totalYield / count,
-
-      profit:
-        totalProfit / count,
-
-      production:
-        totalProduction / count,
-
-      water:
-        totalWater / count,
-    };
-  }, [parcelSimulations]);
-
-  const chartData = parcelSimulations.map(
-    (simulation, index) => ({
-      name: `S${index + 1}`,
-
-      rendimiento: Number(
-        simulation.estimated_yield
-      ),
-
-      utilidad: Number(
-        simulation.profit
-      ),
-
-      agua:
-        Number(
-          simulation.water_use
-        ) / 1000000,
-    })
-  );
+  /* =========================
+     EXCEL
+  ========================= */
 
   const downloadExcel = () => {
     if (!selectedParcel) {
@@ -249,7 +342,8 @@ function Reports() {
     }
 
     if (
-      parcelSimulations.length === 0
+      parcelSimulations.length ===
+      0
     ) {
       alert(
         "Esta parcela todavía no tiene simulaciones guardadas."
@@ -260,10 +354,6 @@ function Reports() {
 
     const workbook =
       XLSX.utils.book_new();
-
-    /* =========================
-       RESUMEN
-    ========================= */
 
     const summaryData = [
       {
@@ -307,7 +397,9 @@ function Reports() {
 
         Valor:
           Number(
-            averages.yield.toFixed(2)
+            averages.yield.toFixed(
+              2
+            )
           ),
       },
       {
@@ -327,7 +419,9 @@ function Reports() {
 
         Valor:
           Number(
-            averages.profit.toFixed(2)
+            averages.profit.toFixed(
+              2
+            )
           ),
       },
       {
@@ -355,10 +449,6 @@ function Reports() {
       "Resumen"
     );
 
-    /* =========================
-       PARCELA
-    ========================= */
-
     const parcelSheet =
       XLSX.utils.json_to_sheet([
         {
@@ -385,13 +475,12 @@ function Reports() {
       "Parcela"
     );
 
-    /* =========================
-       SIMULACIONES
-    ========================= */
-
     const simulationRows =
       parcelSimulations.map(
-        (simulation, index) => ({
+        (
+          simulation,
+          index
+        ) => ({
           Simulacion:
             index + 1,
 
@@ -453,14 +542,11 @@ function Reports() {
       "Simulaciones"
     );
 
-    /* ========================= */
-
     const safeName =
-      selectedParcel.name
-        .replace(
-          /[^a-zA-Z0-9]/g,
-          "_"
-        );
+      selectedParcel.name.replace(
+        /[^a-zA-Z0-9]/g,
+        "_"
+      );
 
     XLSX.writeFile(
       workbook,
@@ -468,123 +554,191 @@ function Reports() {
     );
   };
 
+  /* =========================
+     LOADING
+  ========================= */
+
   if (loading) {
     return (
-      <div className="reports-loading">
+      <div className="ag-report-loading">
         Cargando reportes...
       </div>
     );
   }
 
   return (
-    <section className="reports-page">
-      <div className="dashboard-header">
+    <section className="ag-reports">
+      {/* =====================
+          HEADER
+      ====================== */}
+
+      <header className="ag-report-header">
         <div>
-          <span className="dashboard-eyebrow">
-            AGRISIM · ANÁLISIS
+          <span className="ag-page-eyebrow">
+            INTELIGENCIA DE CAMPO
           </span>
 
-          <h1>Reportes</h1>
+          <h1>
+            Reportes
+          </h1>
 
           <p>
-            Analiza el desempeño de
-            tus parcelas y escenarios.
+            Convierte tus escenarios
+            guardados en información
+            productiva y financiera.
           </p>
         </div>
 
         <button
-          className="excel-button"
-          onClick={downloadExcel}
+          className="ag-report-excel-button"
+          onClick={
+            downloadExcel
+          }
         >
           <FileSpreadsheet
-            size={19}
+            size={18}
           />
 
           Descargar Excel
         </button>
-      </div>
+      </header>
 
-      <div className="reports-toolbar">
-        <div>
-          <label>
-            Parcela
-          </label>
+      {/* =====================
+          TOOLBAR
+      ====================== */}
 
-          <select
-            value={
-              selectedParcelId ??
-              ""
-            }
-            onChange={(event) =>
-              setSelectedParcelId(
-                Number(
-                  event.target.value
+      <section className="ag-report-toolbar">
+        <div className="ag-report-parcel-selector">
+          <div className="ag-report-selector-icon">
+            <Layers3
+              size={18}
+            />
+          </div>
+
+          <div>
+            <label>
+              Parcela analizada
+            </label>
+
+            <select
+              value={
+                selectedParcelId ??
+                ""
+              }
+              onChange={(
+                event
+              ) =>
+                setSelectedParcelId(
+                  Number(
+                    event.target
+                      .value
+                  )
                 )
-              )
-            }
-          >
-            {parcels.map(
-              (parcel) => (
-                <option
-                  key={
-                    parcel.id
-                  }
-                  value={
-                    parcel.id
-                  }
-                >
-                  {parcel.name}
-                  {" · "}
-                  {parcel.crop}
-                </option>
-              )
-            )}
-          </select>
+              }
+            >
+              {parcels.map(
+                (parcel) => (
+                  <option
+                    key={
+                      parcel.id
+                    }
+                    value={
+                      parcel.id
+                    }
+                  >
+                    {
+                      parcel.name
+                    }
+                    {" · "}
+                    {
+                      parcel.crop
+                    }
+                  </option>
+                )
+              )}
+            </select>
+          </div>
         </div>
 
         {selectedParcel && (
-          <div className="reports-parcel-info">
-            <span>
-              {selectedParcel.crop}
-            </span>
+          <div className="ag-report-parcel-meta">
+            <div>
+              <span>
+                Cultivo
+              </span>
 
-            <span>
-              {selectedParcel.hectares}
-              {" "}ha
-            </span>
+              <strong>
+                {
+                  selectedParcel.crop
+                }
+              </strong>
+            </div>
 
-            <span>
-              {selectedParcel.stage}
-            </span>
+            <div>
+              <span>
+                Superficie
+              </span>
+
+              <strong>
+                {
+                  selectedParcel.hectares
+                }{" "}
+                ha
+              </strong>
+            </div>
+
+            <div>
+              <span>
+                Etapa
+              </span>
+
+              <strong>
+                {
+                  selectedParcel.stage
+                }
+              </strong>
+            </div>
           </div>
         )}
-      </div>
+      </section>
+
+      {/* =====================
+          EMPTY
+      ====================== */}
 
       {parcelSimulations.length ===
       0 ? (
-        <div className="reports-empty">
-          <BarChart3
-            size={58}
-          />
+        <div className="ag-report-empty">
+          <div>
+            <BarChart3
+              size={48}
+            />
+          </div>
 
           <h2>
-            Sin simulaciones
+            Sin información todavía
           </h2>
 
           <p>
             Guarda al menos una
             simulación para esta parcela
-            y sus resultados aparecerán
-            aquí.
+            y AgriSim comenzará a
+            construir sus reportes.
           </p>
         </div>
       ) : (
         <>
-          <div className="reports-kpi-grid">
-            <div className="report-kpi-card">
-              <Sprout
-                size={22}
-              />
+          {/* =====================
+              KPIs
+          ====================== */}
+
+          <div className="ag-report-kpis">
+            <article className="ag-report-kpi">
+              <div className="ag-report-kpi-icon">
+                <Sprout
+                  size={21}
+                />
+              </div>
 
               <span>
                 Rendimiento promedio
@@ -593,15 +747,20 @@ function Reports() {
               <strong>
                 {averages.yield.toFixed(
                   2
-                )}{" "}
-                t/ha
+                )}
               </strong>
-            </div>
 
-            <div className="report-kpi-card">
-              <TrendingUp
-                size={22}
-              />
+              <small>
+                toneladas / ha
+              </small>
+            </article>
+
+            <article className="ag-report-kpi">
+              <div className="ag-report-kpi-icon">
+                <TrendingUp
+                  size={21}
+                />
+              </div>
 
               <span>
                 Producción promedio
@@ -610,15 +769,20 @@ function Reports() {
               <strong>
                 {averages.production.toFixed(
                   1
-                )}{" "}
-                t
+                )}
               </strong>
-            </div>
 
-            <div className="report-kpi-card">
-              <Wallet
-                size={22}
-              />
+              <small>
+                toneladas
+              </small>
+            </article>
+
+            <article className="ag-report-kpi ag-report-kpi-profit">
+              <div className="ag-report-kpi-icon">
+                <Wallet
+                  size={21}
+                />
+              </div>
 
               <span>
                 Utilidad promedio
@@ -634,12 +798,18 @@ function Reports() {
                   }
                 )}
               </strong>
-            </div>
 
-            <div className="report-kpi-card">
-              <Droplets
-                size={22}
-              />
+              <small>
+                MXN
+              </small>
+            </article>
+
+            <article className="ag-report-kpi">
+              <div className="ag-report-kpi-icon">
+                <Droplets
+                  size={21}
+                />
+              </div>
 
               <span>
                 Agua promedio
@@ -649,51 +819,109 @@ function Reports() {
                 {(
                   averages.water /
                   1000000
-                ).toFixed(
-                  1
-                )}{" "}
-                ML
+                ).toFixed(1)}
               </strong>
-            </div>
+
+              <small>
+                ML
+              </small>
+            </article>
           </div>
 
-          <div className="reports-charts-grid">
-            <div className="report-chart-card">
-              <div className="report-card-header">
+          {/* =====================
+              CHARTS
+          ====================== */}
+
+          <div className="ag-report-chart-grid">
+            <article className="ag-report-chart-card">
+              <div className="ag-report-card-header">
                 <div>
                   <span>
-                    Histórico
+                    HISTÓRICO
                   </span>
 
                   <h2>
                     Rendimiento
                   </h2>
+
+                  <p>
+                    Evolución por
+                    escenario guardado.
+                  </p>
                 </div>
+
+                <Sprout
+                  size={20}
+                />
               </div>
 
-              <div className="report-chart">
+              <div className="ag-report-chart">
                 <ResponsiveContainer
                   width="100%"
                   height="100%"
                 >
                   <LineChart
-                    data={chartData}
+                    data={
+                      chartData
+                    }
+                    margin={{
+                      top: 10,
+                      right: 15,
+                      left: -15,
+                      bottom: 0,
+                    }}
                   >
                     <CartesianGrid
                       strokeDasharray="3 3"
-                      stroke="#294454"
+                      stroke="#d9deca"
+                      vertical={
+                        false
+                      }
                     />
 
                     <XAxis
                       dataKey="name"
-                      stroke="#7892a1"
+                      stroke="#7e8371"
+                      tick={{
+                        fontSize:
+                          10,
+                      }}
+                      axisLine={
+                        false
+                      }
+                      tickLine={
+                        false
+                      }
                     />
 
                     <YAxis
-                      stroke="#7892a1"
+                      stroke="#7e8371"
+                      tick={{
+                        fontSize:
+                          10,
+                      }}
+                      axisLine={
+                        false
+                      }
+                      tickLine={
+                        false
+                      }
                     />
 
-                    <Tooltip />
+                    <Tooltip
+                      contentStyle={{
+                        background:
+                          "#122314",
+                        border:
+                          "1px solid #273f2b",
+                        borderRadius:
+                          "12px",
+                        color:
+                          "#ffffff",
+                        fontSize:
+                          "11px",
+                      }}
+                    />
 
                     <Legend />
 
@@ -701,82 +929,167 @@ function Reports() {
                       type="monotone"
                       dataKey="rendimiento"
                       name="Rendimiento t/ha"
-                      stroke="#52b7e8"
-                      strokeWidth={3}
+                      stroke="#26a200"
+                      strokeWidth={
+                        3
+                      }
+                      dot={{
+                        r: 4,
+                        fill:
+                          "#68ef3f",
+                        stroke:
+                          "#26a200",
+                      }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
-            </div>
+            </article>
 
-            <div className="report-chart-card">
-              <div className="report-card-header">
+            <article className="ag-report-chart-card">
+              <div className="ag-report-card-header">
                 <div>
                   <span>
-                    Financiero
+                    FINANCIERO
                   </span>
 
                   <h2>
                     Utilidad
                   </h2>
+
+                  <p>
+                    Resultado financiero
+                    de cada escenario.
+                  </p>
                 </div>
+
+                <Wallet
+                  size={20}
+                />
               </div>
 
-              <div className="report-chart">
+              <div className="ag-report-chart">
                 <ResponsiveContainer
                   width="100%"
                   height="100%"
                 >
                   <LineChart
-                    data={chartData}
+                    data={
+                      chartData
+                    }
+                    margin={{
+                      top: 10,
+                      right: 15,
+                      left: -5,
+                      bottom: 0,
+                    }}
                   >
                     <CartesianGrid
                       strokeDasharray="3 3"
-                      stroke="#294454"
+                      stroke="#d9deca"
+                      vertical={
+                        false
+                      }
                     />
 
                     <XAxis
                       dataKey="name"
-                      stroke="#7892a1"
+                      stroke="#7e8371"
+                      tick={{
+                        fontSize:
+                          10,
+                      }}
+                      axisLine={
+                        false
+                      }
+                      tickLine={
+                        false
+                      }
                     />
 
                     <YAxis
-                      stroke="#7892a1"
+                      stroke="#7e8371"
+                      tick={{
+                        fontSize:
+                          10,
+                      }}
+                      axisLine={
+                        false
+                      }
+                      tickLine={
+                        false
+                      }
                     />
 
-                    <Tooltip />
+                    <Tooltip
+                      contentStyle={{
+                        background:
+                          "#122314",
+                        border:
+                          "1px solid #273f2b",
+                        borderRadius:
+                          "12px",
+                        color:
+                          "#ffffff",
+                        fontSize:
+                          "11px",
+                      }}
+                    />
 
                     <Legend />
 
                     <Line
                       type="monotone"
                       dataKey="utilidad"
-                      name="Utilidad $"
-                      stroke="#60c47a"
-                      strokeWidth={3}
+                      name="Utilidad MXN"
+                      stroke="#26a200"
+                      strokeWidth={
+                        3
+                      }
+                      dot={{
+                        r: 4,
+                        fill:
+                          "#68ef3f",
+                        stroke:
+                          "#26a200",
+                      }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
-            </div>
+            </article>
           </div>
 
-          <div className="reports-bottom-grid">
-            <div className="latest-simulation-card">
-              <div className="report-card-header">
+          {/* =====================
+              BOTTOM
+          ====================== */}
+
+          <div className="ag-report-bottom-grid">
+            <article className="ag-report-latest-card">
+              <div className="ag-report-card-header">
                 <div>
                   <span>
-                    Último escenario
+                    ÚLTIMO ESCENARIO
                   </span>
 
                   <h2>
                     Resultado reciente
                   </h2>
+
+                  <p>
+                    Última simulación
+                    guardada para esta
+                    parcela.
+                  </p>
                 </div>
+
+                <CalendarDays
+                  size={20}
+                />
               </div>
 
               {latestSimulation && (
-                <div className="latest-simulation-data">
+                <div className="ag-report-latest-data">
                   <div>
                     <span>
                       Rendimiento
@@ -788,8 +1101,11 @@ function Reports() {
                       ).toFixed(
                         2
                       )}
-                      {" "}t/ha
                     </strong>
+
+                    <small>
+                      t/ha
+                    </small>
                   </div>
 
                   <div>
@@ -809,6 +1125,10 @@ function Reports() {
                         }
                       )}
                     </strong>
+
+                    <small>
+                      MXN
+                    </small>
                   </div>
 
                   <div>
@@ -820,8 +1140,11 @@ function Reports() {
                       {
                         latestSimulation.irrigation
                       }
-                      {" "}mm/día
                     </strong>
+
+                    <small>
+                      mm/día
+                    </small>
                   </div>
 
                   <div>
@@ -829,7 +1152,11 @@ function Reports() {
                       Riesgo
                     </span>
 
-                    <strong>
+                    <strong
+                      className={`ag-report-risk ${
+                        latestSimulation.risk.toLowerCase()
+                      }`}
+                    >
                       {
                         latestSimulation.risk
                       }
@@ -837,31 +1164,52 @@ function Reports() {
                   </div>
                 </div>
               )}
-            </div>
+            </article>
 
-            <div className="report-summary-card">
-              <div className="report-card-header">
+            <article className="ag-report-summary-card">
+              <div className="ag-report-card-header">
                 <div>
                   <span>
-                    Base histórica
+                    BASE HISTÓRICA
                   </span>
 
                   <h2>
                     Simulaciones
                   </h2>
                 </div>
+
+                <History
+                  size={20}
+                />
               </div>
 
-              <div className="report-big-number">
-                {
-                  parcelSimulations.length
-                }
+              <div className="ag-report-history-number">
+                <strong>
+                  {
+                    parcelSimulations.length
+                  }
+                </strong>
 
                 <span>
                   escenarios guardados
                 </span>
               </div>
-            </div>
+
+              <div className="ag-report-history-footer">
+                <span>
+                  Cada escenario alimenta
+                  el análisis histórico de
+                  esta parcela.
+                </span>
+              </div>
+            </article>
+          </div>
+
+          <div className="ag-report-model-note">
+            Los indicadores provienen de
+            las simulaciones experimentales
+            actualmente guardadas en
+            AgriSim.
           </div>
         </>
       )}

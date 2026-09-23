@@ -8,6 +8,9 @@ import {
   Sprout,
   TrendingUp,
   FlaskConical,
+  ArrowRight,
+  Activity,
+  BarChart3,
 } from "lucide-react";
 
 type Parcel = {
@@ -82,7 +85,10 @@ function Dashboard() {
         return;
       }
 
-      setParcels((parcelData ?? []) as Parcel[]);
+      setParcels(
+        (parcelData ?? []) as Parcel[]
+      );
+
       setSimulations(
         (simulationData ?? []) as Simulation[]
       );
@@ -166,59 +172,66 @@ function Dashboard() {
 
   if (loading) {
     return (
-      <div className="reports-loading">
-        Cargando inicio...
+      <div className="ag-home-loading">
+        Cargando centro de operaciones...
       </div>
     );
   }
 
   return (
-    <section className="dashboard">
-      <div className="dashboard-header">
-        <div>
-          <span className="dashboard-eyebrow">
-            AGRISIM · CENTRO DE OPERACIONES
+    <section className="ag-home">
+      <div className="ag-home-hero">
+        <div className="ag-home-hero-copy">
+          <span className="ag-page-eyebrow">
+            CENTRO DE OPERACIONES
           </span>
 
-          <h1>Inicio</h1>
+          <h1>
+            Decisiones más claras
+            <span className="ag-green">
+              {" "}para tu campo.
+            </span>
+          </h1>
 
           <p>
-            Resumen general de tus parcelas,
-            simulaciones y actividad reciente.
+            Visualiza tus parcelas, revisa el
+            desempeño de tus escenarios y detecta
+            oportunidades desde un solo lugar.
           </p>
+        </div>
+
+        <div className="ag-home-hero-quote">
+          <span className="ag-editorial">
+            La mejor cosecha empieza con
+            una mejor decisión.
+          </span>
         </div>
       </div>
 
-      <div className="home-metrics">
-        <div className="home-metric-card">
-          <div className="home-metric-icon">
-            <Tractor size={22} />
+      <div className="ag-home-kpis">
+        <article className="ag-home-kpi">
+          <div className="ag-home-kpi-icon">
+            <Tractor size={21} />
           </div>
 
           <div>
-            <span>
-              Parcelas activas
-            </span>
+            <span>Parcelas activas</span>
 
-            <strong>
-              {parcels.length}
-            </strong>
+            <strong>{parcels.length}</strong>
 
             <small>
               Predios registrados
             </small>
           </div>
-        </div>
+        </article>
 
-        <div className="home-metric-card">
-          <div className="home-metric-icon">
-            <FlaskConical size={22} />
+        <article className="ag-home-kpi">
+          <div className="ag-home-kpi-icon">
+            <FlaskConical size={21} />
           </div>
 
           <div>
-            <span>
-              Simulaciones
-            </span>
+            <span>Simulaciones</span>
 
             <strong>
               {simulations.length}
@@ -228,11 +241,11 @@ function Dashboard() {
               Escenarios guardados
             </small>
           </div>
-        </div>
+        </article>
 
-        <div className="home-metric-card">
-          <div className="home-metric-icon">
-            <TrendingUp size={22} />
+        <article className="ag-home-kpi">
+          <div className="ag-home-kpi-icon">
+            <TrendingUp size={21} />
           </div>
 
           <div>
@@ -249,17 +262,15 @@ function Dashboard() {
               Según tus simulaciones
             </small>
           </div>
-        </div>
+        </article>
 
-        <div className="home-metric-card">
-          <div className="home-metric-icon warning-icon">
-            <TriangleAlert size={22} />
+        <article className="ag-home-kpi ag-home-kpi-alert">
+          <div className="ag-home-kpi-icon">
+            <TriangleAlert size={21} />
           </div>
 
           <div>
-            <span>
-              Alertas
-            </span>
+            <span>Alertas</span>
 
             <strong>
               {alerts}
@@ -269,32 +280,37 @@ function Dashboard() {
               Escenarios con riesgo
             </small>
           </div>
-        </div>
+        </article>
       </div>
 
-      <div className="home-main-grid">
-        <div className="home-farm-card">
-          <div className="home-card-header">
+      <div className="ag-home-main-grid">
+        <section className="ag-home-field-card">
+          <div className="ag-home-card-header">
             <div>
-              <span className="panel-label">
-                Resumen productivo
+              <span className="ag-home-section-kicker">
+                RESUMEN PRODUCTIVO
               </span>
 
               <h2>
-                Estado general
+                Vista general del campo
               </h2>
             </div>
 
-            <span className="status-badge">
+            <span className="ag-badge">
               {alerts === 0
                 ? "Operación estable"
                 : `${alerts} alertas`}
             </span>
           </div>
 
-          <div className="home-farm-visual">
-            <div className="home-farm-center">
-              <Sprout size={70} />
+          <div className="ag-home-field-visual">
+            <div className="ag-home-orb ag-home-orb-one" />
+            <div className="ag-home-orb ag-home-orb-two" />
+
+            <div className="ag-home-field-center">
+              <div className="ag-home-field-icon">
+                <Sprout size={54} />
+              </div>
 
               <h3>
                 {latestParcel
@@ -310,7 +326,7 @@ function Dashboard() {
             </div>
           </div>
 
-          <div className="home-farm-footer">
+          <div className="ag-home-field-footer">
             <div>
               <Droplets size={18} />
 
@@ -338,7 +354,7 @@ function Dashboard() {
             </div>
 
             <div>
-              <TrendingUp size={18} />
+              <BarChart3 size={18} />
 
               <span>
                 Rendimiento
@@ -351,27 +367,31 @@ function Dashboard() {
               </strong>
             </div>
           </div>
-        </div>
+        </section>
 
-        <div className="home-activity-card">
-          <div className="home-card-header">
+        <aside className="ag-home-activity-card">
+          <div className="ag-home-card-header">
             <div>
-              <span className="panel-label">
-                Seguimiento
+              <span className="ag-home-section-kicker">
+                SEGUIMIENTO
               </span>
 
               <h2>
                 Actividad reciente
               </h2>
             </div>
+
+            <Activity
+              size={21}
+            />
           </div>
 
-          <div className="home-activity-list">
+          <div className="ag-home-activity-list">
             {latestSimulation ? (
-              <div className="home-activity-item">
-                <span className="activity-dot green" />
+              <div className="ag-home-activity-item">
+                <div className="ag-home-activity-dot success" />
 
-                <div>
+                <div className="ag-home-activity-content">
                   <strong>
                     Simulación guardada
                   </strong>
@@ -386,27 +406,29 @@ function Dashboard() {
                     ).toFixed(2)}
                     {" "}t/ha
                   </span>
+
+                  <small>
+                    {new Date(
+                      latestSimulation.created_at
+                    ).toLocaleString(
+                      "es-MX",
+                      {
+                        dateStyle:
+                          "short",
+                        timeStyle:
+                          "short",
+                      }
+                    )}
+                  </small>
                 </div>
 
-                <small>
-                  {new Date(
-                    latestSimulation.created_at
-                  ).toLocaleString(
-                    "es-MX",
-                    {
-                      dateStyle:
-                        "short",
-                      timeStyle:
-                        "short",
-                    }
-                  )}
-                </small>
+                <ArrowRight size={16} />
               </div>
             ) : (
-              <div className="home-activity-item">
-                <span className="activity-dot blue" />
+              <div className="ag-home-activity-item">
+                <div className="ag-home-activity-dot neutral" />
 
-                <div>
+                <div className="ag-home-activity-content">
                   <strong>
                     Sin simulaciones
                   </strong>
@@ -419,10 +441,10 @@ function Dashboard() {
             )}
 
             {latestParcel && (
-              <div className="home-activity-item">
-                <span className="activity-dot blue" />
+              <div className="ag-home-activity-item">
+                <div className="ag-home-activity-dot info" />
 
-                <div>
+                <div className="ag-home-activity-content">
                   <strong>
                     Parcela registrada
                   </strong>
@@ -432,25 +454,27 @@ function Dashboard() {
                     {" · "}
                     {latestParcel.crop}
                   </span>
+
+                  {latestParcel.created_at && (
+                    <small>
+                      {new Date(
+                        latestParcel.created_at
+                      ).toLocaleDateString(
+                        "es-MX"
+                      )}
+                    </small>
+                  )}
                 </div>
 
-                {latestParcel.created_at && (
-                  <small>
-                    {new Date(
-                      latestParcel.created_at
-                    ).toLocaleDateString(
-                      "es-MX"
-                    )}
-                  </small>
-                )}
+                <ArrowRight size={16} />
               </div>
             )}
 
             {alerts > 0 && (
-              <div className="home-activity-item">
-                <span className="activity-dot yellow" />
+              <div className="ag-home-activity-item">
+                <div className="ag-home-activity-dot warning" />
 
-                <div>
+                <div className="ag-home-activity-content">
                   <strong>
                     Riesgo detectado
                   </strong>
@@ -464,10 +488,12 @@ function Dashboard() {
                     requieren revisión.
                   </span>
                 </div>
+
+                <ArrowRight size={16} />
               </div>
             )}
           </div>
-        </div>
+        </aside>
       </div>
     </section>
   );

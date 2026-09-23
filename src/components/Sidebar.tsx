@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+
 import {
   Home,
   Map,
@@ -9,39 +10,126 @@ import {
 } from "lucide-react";
 
 function Sidebar() {
+  const navItems = [
+    {
+      to: "/",
+      label: "Inicio",
+      icon: Home,
+    },
+    {
+      to: "/parcelas",
+      label: "Parcelas",
+      icon: Map,
+    },
+    {
+      to: "/simulaciones",
+      label: "Simulaciones",
+      icon: FlaskConical,
+    },
+    {
+      to: "/reportes",
+      label: "Reportes",
+      icon: FileBarChart,
+    },
+  ];
+
   return (
-    <aside className="sidebar">
-      <div className="logo">
-        <Leaf size={28} />
-        <span>AgriSim</span>
+    <aside className="ag-sidebar">
+      <div className="ag-sidebar-brand">
+        <div className="ag-sidebar-logo">
+          <Leaf size={25} strokeWidth={2.2} />
+        </div>
+
+        <div>
+          <strong>
+            Agri<span>Sim</span>
+          </strong>
+
+          <small>
+            Simulación agrícola
+          </small>
+        </div>
       </div>
 
-      <nav className="sidebar-nav">
-        <NavLink to="/">
-          <Home size={20} />
-          Inicio
-        </NavLink>
+      <nav className="ag-sidebar-nav">
+        <span className="ag-sidebar-section-label">
+          PLATAFORMA
+        </span>
 
-        <NavLink to="/parcelas">
-          <Map size={20} />
-          Parcelas
-        </NavLink>
+        {navItems.map(
+          ({
+            to,
+            label,
+            icon: Icon,
+          }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={to === "/"}
+              className={({ isActive }) =>
+                `ag-sidebar-link ${
+                  isActive
+                    ? "active"
+                    : ""
+                }`
+              }
+            >
+              <div className="ag-sidebar-link-icon">
+                <Icon
+                  size={20}
+                  strokeWidth={1.8}
+                />
+              </div>
 
-        <NavLink to="/simulaciones">
-          <FlaskConical size={20} />
-          Simulaciones
-        </NavLink>
+              <span>{label}</span>
+            </NavLink>
+          )
+        )}
 
-        <NavLink to="/reportes">
-          <FileBarChart size={20} />
-          Reportes
-        </NavLink>
+        <span className="ag-sidebar-section-label ag-sidebar-second-section">
+          SISTEMA
+        </span>
 
-        <NavLink to="/configuracion">
-          <Settings size={20} />
-          Configuración
+        <NavLink
+          to="/configuracion"
+          className={({ isActive }) =>
+            `ag-sidebar-link ${
+              isActive ? "active" : ""
+            }`
+          }
+        >
+          <div className="ag-sidebar-link-icon">
+            <Settings
+              size={20}
+              strokeWidth={1.8}
+            />
+          </div>
+
+          <span>
+            Configuración
+          </span>
         </NavLink>
       </nav>
+
+      <div className="ag-sidebar-footer">
+        <div className="ag-sidebar-message">
+          <Leaf size={20} />
+
+          <div>
+            <strong>
+              Cultiva mejores decisiones
+            </strong>
+
+            <span>
+              Datos para un campo más eficiente.
+            </span>
+          </div>
+        </div>
+
+        <div className="ag-sidebar-version">
+          AgriSim v0.11
+        </div>
+      </div>
     </aside>
   );
 }

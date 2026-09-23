@@ -1,16 +1,17 @@
 import { Outlet } from "react-router-dom";
+
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
 
 function DashboardLayout() {
   return (
-    <div className="app-layout">
+    <div className="ag-app-shell">
       <Sidebar />
 
-      <div className="main-area">
+      <div className="ag-app-main">
         <Topbar />
 
-        <main className="page-content">
+        <main className="ag-app-content">
           <Outlet />
         </main>
       </div>
