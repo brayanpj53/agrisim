@@ -6772,3 +6772,176 @@ html.ag-reduce-motion *::after {
     flex-direction: column;
   }
 }
+/* =========================================================
+   AGRISIM v0.2
+   MAPA DE PARCELAS
+========================================================= */
+
+.ag-map-wrapper {
+  position: relative;
+
+  width: 100%;
+  min-height: 440px;
+
+  overflow: hidden;
+
+  background:
+    var(--ag-bg);
+
+  border-radius:
+    0;
+}
+
+.ag-map-container {
+  width: 100%;
+  min-height: 440px;
+}
+
+/* Controles MapLibre */
+
+.ag-map-wrapper
+.maplibregl-ctrl-group {
+  overflow: hidden;
+
+  border-radius: 12px;
+
+  box-shadow:
+    0 6px 20px
+    rgba(0, 0, 0, 0.14);
+}
+
+.ag-map-wrapper
+.maplibregl-ctrl-group button {
+  width: 36px;
+  height: 36px;
+}
+
+.ag-map-wrapper
+.maplibregl-ctrl-scale {
+  padding:
+    4px 8px;
+
+  border:
+    1px solid
+    rgba(48, 50, 42, 0.25);
+
+  border-top: 0;
+
+  background:
+    rgba(255,255,255,0.88);
+
+  color:
+    var(--ag-text-dark);
+
+  font-size: 9px;
+
+  backdrop-filter:
+    blur(8px);
+}
+
+/* Badge temporal */
+
+.ag-map-demo-badge {
+  position: absolute;
+
+  right: 14px;
+  bottom: 14px;
+
+  left: auto;
+  top: auto;
+
+  z-index: 5;
+
+  padding: 7px 10px;
+
+  border: 1px solid
+    rgba(104,239,63,0.25);
+
+  border-radius:
+    var(--ag-radius-pill);
+
+  background:
+    rgba(18,35,20,0.86);
+
+  color:
+    var(--ag-primary);
+
+  font-size: 9px;
+  font-weight: 600;
+
+  backdrop-filter:
+    blur(10px);
+
+  pointer-events: none;
+}
+/* =========================================================
+   AGRISIM v0.2
+   UBICACIÓN DE PARCELA
+========================================================= */
+
+.ag-location-input {
+  width: 100%;
+  min-height: 46px;
+
+  margin-top: 7px;
+  padding: 0 13px;
+
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  border: 1px solid var(--ag-border-light);
+  border-radius: 13px;
+
+  background: var(--ag-surface);
+
+  transition:
+    border-color var(--ag-transition),
+    box-shadow var(--ag-transition);
+}
+
+.ag-location-input:focus-within {
+  border-color: var(--ag-primary);
+
+  box-shadow:
+    0 0 0 3px rgba(104, 239, 63, 0.11);
+}
+
+.ag-location-input svg {
+  flex-shrink: 0;
+  color: var(--ag-primary-deep);
+}
+
+.ag-location-input input {
+  width: 100%;
+
+  padding: 0;
+  margin: 0;
+
+  border: 0;
+  outline: 0;
+
+  background: transparent;
+
+  color: var(--ag-text-dark);
+}
+
+.ag-location-input input::placeholder {
+  color: var(--ag-text-muted);
+}
+
+.ag-location-help {
+  display: block;
+
+  margin-top: 7px;
+
+  color: var(--ag-text-muted);
+
+  font-size: 9px;
+  line-height: 1.5;
+}
+.ag-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
